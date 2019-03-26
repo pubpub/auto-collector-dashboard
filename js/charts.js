@@ -31,105 +31,36 @@ const chartColors = [
 ];
 
 // helper function for rendering 1st row's small charts on the Overview page
-const areaChartWithDetails = ({
+const areaChartWithDetails =  async ({
   client,
   container,
   queries,
   title
 }) => {
-  const containerElement = document.getElementById(container);
-  containerElement.innerHTML = `
-  <div class="perecent-difference"></div>
-  <div class="current-count"></div>
-  <div class="chart"></div>`;
 
-  client
-  .query({
-    saved_query_name: queries.current
+  const previous = client.query({ saved_query_name: queries.current }).then(res => res);
+  const current = client.query({ saved_query_name: queries.compareWith }).then(res => res);
+  const results = client.query({ saved_query_name: queries.area }).then(res =>res);
+
+  const data = await Promise.all([previous, current, results]);
+  
+  const revenueChart = new KeenDataviz({
+    container,
+    title,
+    type: 'metric-combo',
+    colors: chartColors,
+    metricResults: {
+      previous: data[0],
+      current: data[1],
+    },
+    results: data[2],
+    tooltip: {
+      format: {
+        title: (d) => new Date(d).toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })
+      }
+    }
   })
-  .then(res => {
-    const countPageviewsPrevious24h = res.result;
-    client
-    .query({
-      saved_query_name: queries.compareWith
-    })
-    .then(res => {
-      const countPageviewsPrevious24hDayAgo = res.result - countPageviewsPrevious24h;
-
-      let percentDifference = Math.round(countPageviewsPrevious24h/countPageviewsPrevious24hDayAgo*100);
-      if (percentDifference < 100) {
-        percentDifference = (100 - percentDifference)*-1;
-      }
-      if (percentDifference > 100) {
-        percentDifference -= 100;
-      }
-
-      const countLabel = containerElement.querySelector('.current-count');
-      countLabel.innerHTML = countPageviewsPrevious24h;
-      const percentLabel = containerElement.querySelector('.perecent-difference');
-      let faDirection = 'up';
-      if (percentDifference < 0){
-        faDirection = 'down';
-        percentLabel.classList.add('chart-inline-label-decreased', 'chart-inline-label-decreased-important');
-        countLabel.classList.add('chart-inline-label-decreased');
-      }
-      if (percentDifference > 0){
-        percentLabel.classList.add('chart-inline-label-increased');
-        countLabel.classList.add('chart-inline-label-increased');
-      }
-      percentLabel.innerHTML = `<i class='fas fa-angle-${faDirection}'></i> ${percentDifference} %`;
-
-    });
-  });
-
-
-  client
-  .query({
-    saved_query_name: queries.area
-  })
-  .then(results => {
-    const chartRoot = containerElement.querySelector(".chart");
-    const revenueChart = new KeenDataviz({
-      container: chartRoot,
-      title,
-      results,
-      type: 'area-spline',
-      point: {
-        r: 0,
-        focus: {
-          expand: {
-            r: 5,
-            enabled: true
-          },
-        },
-        select: {
-          r: 5,
-          enabled: true
-        }
-      },
-      axis: {
-        y: {
-          show: false
-        },
-        x: {
-          show:false
-        }
-      },
-      grid:{
-        x: {
-          show: false
-        },
-        y: {
-          show: false
-        }
-      },
-      colors: chartColors,
-      padding: {
-        left: 0,
-        right: 0
-      },
-    });
-  });
+  .render();
 };
 
 
@@ -142,7 +73,7 @@ renderCharts = () => {
     areaChartWithDetails({
       client,
       title: 'Views Last 24h',
-      container: 'chart-views-last-24h',
+      container: '#chart-views-last-24h',
       queries: {
         current: 'autocollector-dashboard-demo---count-pageviews-previous-24h',
         compareWith: 'autocollector-dashboard-demo---count-pageviews-previous-48h',
@@ -153,7 +84,7 @@ renderCharts = () => {
     areaChartWithDetails({
       client,
       title: 'Views Last 7d',
-      container: 'chart-views-last-7d',
+      container: '#chart-views-last-7d',
       queries: {
         current: 'autocollector-dashboard-demo---count-pageviews-previous-7d',
         compareWith: 'autocollector-dashboard-demo---count-pageviews-previous-14d',
@@ -164,7 +95,7 @@ renderCharts = () => {
     areaChartWithDetails({
       client,
       title: 'Clicks Last 24h',
-      container: 'chart-clicks-last-24h',
+      container: '#chart-clicks-last-24h',
       queries: {
         current: 'autocollector-dashboard-demo---count-clicks-previous-24h',
         compareWith: 'autocollector-dashboard-demo---count-clicks-previous-48h',
@@ -175,7 +106,7 @@ renderCharts = () => {
     areaChartWithDetails({
       client,
       title: 'Clicks Last 7d',
-      container: 'chart-clicks-last-7d',
+      container: '#chart-clicks-last-7d',
       queries: {
         current: 'autocollector-dashboard-demo---count-clicks-previous-7d',
         compareWith: 'autocollector-dashboard-demo---count-clicks-previous-14d',
