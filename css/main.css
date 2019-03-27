@@ -305,6 +305,14 @@ nav .container {
   flex: 1;
 }
 
+.keen-dataviz-metric-combo .c3-lines{
+  display: none;
+}
+
+.keen-dataviz-metric-combo .c3-area{
+  fill: rgb(228, 228, 228) !important;
+}
+
 .map-label {
   padding: 0.6em 0.3em 0.3em;
   font-size: 1.3em;
